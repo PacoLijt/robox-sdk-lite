@@ -22,3 +22,6 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/PacoLijt/roio-lite"
 "Bug Tracker" = "https://github.com/PacoLijt/roio-lite/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/roio-lite"]
