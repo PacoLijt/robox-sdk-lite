@@ -3,12 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "roio-lite"
-version = "1.0.0"
+name = "robox-sdk-lite"
+version = "1.0.2"
 authors = [
   { name="Paco Li Junting", email="paco.li@intedigo.com" },
 ]
-description = "RoIO Lite SDK for Intedigo Robot System"
+description = "RoBOX Lite SDK for Intedigo RoIO Robot System"
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
@@ -20,8 +20,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/PacoLijt/roio-lite"
-"Bug Tracker" = "https://github.com/PacoLijt/roio-lite/issues"
+"Homepage" = "https://github.com/PacoLijt/robox-sdk-lite"
+"Bug Tracker" = "https://github.com/PacoLijt/robox-sdk-lite/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/roio-lite"]
+packages = ["src/robox-sdk-lite"]
