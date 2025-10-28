@@ -1,30 +1,25 @@
-
-# ROIO目录结构
-
-
+# ROIO Project Structure
 
 ```javascript
 ROIO
-├── roio_proto.py           # ROIO协议和消息定义
-├── roio_client.py          # ROIOClient类的实现， __main__方法实现了从stdin获取输入消息后publish出去的功能
-├── roio_echo_client.py     # 实现了被publish到的消息的原样echo回去的ROIO Client实现样例
-├── roio_pub_meter.py       # 以1000byte包大小，目标200Hz的频率publish的性能测试工具
-├── roio_sub_meter.py       # 跑在roio_pub_meter.py对端接收和统计包数量的工具，pub_meter发送的数量跟sub_meter应该对上
-├── roio_agent_mock.py      # 一个模拟ROIO Agent的类，用于测试ROIOClient， 纯本地模拟ROIO Agent收到pub消息后，发给订阅者，这里没有通过RoDN的传递消息的过程
-├── Logger.py               # 日志功能依赖
+├── roio_proto.py           # ROIO protocol and message definitions
+├── roio_client.py          # Implementation of the ROIOClient class. The __main__ method implements functionality to get input messages from stdin and publish them
+├── roio_echo_client.py     # Sample implementation of an ROIO Client that echoes back received messages
+├── roio_pub_meter.py       # Performance testing tool that publishes packets at 1000 bytes size with a target frequency of 200Hz
+├── roio_sub_meter.py       # Tool running on the receiving end of roio_pub_meter to receive and count packets. The number sent by pub_meter should match what sub_meter receives
+├── roio_agent_mock.py      # A mock ROIO Agent class for testing ROIOClient. This simulates locally how the ROIO Agent receives pub messages and forwards them to subscribers without going through RoDN message transmission process
+├── Logger.py               # Logging functionality dependency
 ├── __init__.py
-└── UdpSocket.py            # UDP socket功能依赖
+└── UdpSocket.py            # UDP socket functionality dependency
 ```
 
+# Overview
 
-# 概述
+`ROIOClient` is a client class designed for real-time communication scenarios, mainly used to establish UDP communication with ROIO Agent, subscribe/unsubscribe to ROIO channels, automatically maintain periodic subscription heartbeat, and process received publish messages according to user-defined callback functions. It's suitable for application scenarios requiring point-to-point real-time interaction (such as instant messaging, monitoring data reporting, robot control, game clients, etc.).
 
-ROIOClient是一个面向实时通信场景设计的客户端类，主要用于与ROIO Agent建立UDP通信，对ROIO channel进行subscribe/unsubscribe，定期subscription的自动心跳保活， 并对接收到的publish消息，按用户定义的回调函数进行处理。适用于需要点对点实时交互的应用场景（如即时通讯、监控数据上报、机器人控制，游戏客户端等）。
+The diagram below shows the process of publishing a message from one direction to another. As long as both communicating parties agree on the channel ID, they can send messages to each other. For example, control messages from RCA to Robot can be placed in channelId==1, while status feedback in the opposite direction can be put in channel==2.
 
-
-下图展示了一个方向publish消息到另外一个方向的过程，只要通信双方约定好通道号(channelId)， 就能够实现相互发送消息，比如把从RCA到Robot方向的控制消息放到channelId==1, 把反方向的状态回报放到channel==2
-
-或者按channelId区分控制的关节等。
+Alternatively, channels can be distinguished by channelId to control different joints.
 
 ```mermaidjs
 sequenceDiagram
@@ -41,110 +36,96 @@ sequenceDiagram
   B -->> C: IF3 PUB channel 0: [bytes]
   C -->> D: publish channel 0: [bytes]
   D -->> C: publish ack
-  
-  
 ```
 
-# 初始化ROIOClient
-
+# Initializing ROIOClient
 
 ```python
 class RoIOClient(Thread):
     def __init__(self,
                  target: Tuple[str, int] = (os.getenv('ROIO_HOST', '127.0.0.1'), int(os.getenv('ROIO_PORT', '3333'))),
                  cb: Optional[Callable[[RoIOMsg], None]] = None,
-                 max_queue_size: int = 5,  # 可配置的队列容量
-                 udp_timeout: int = 1,  # 一般ROIO Client和Agent在局域网内, 响应时间一般不会超过1秒, 所以设置timeout为1秒
+                 max_queue_size: int = 5,  # Configurable queue capacity
+                 udp_timeout: int = 1,  # Generally, ROIO Client and Agent are within LAN where response time typically doesn't exceed 1 second, so timeout is set to 1 second
                  pub_no_ack = False
                  ):
                  ...
  
      def set_callback(self, cb:Optional[Callable[[RoIOMsg], None]]):
-        """用于对象生成之后设置消息处理回调方法, 同__init__的cb参数的作用"""
+        """Used to set the message processing callback method after object creation, same function as the cb parameter in __init__"""
         self.msg_process_cb = cb
-            
 ```
 
-## ROIO相关环境变量
+## ROIO Related Environment Variables
 
-| 环境变量名 | 含义 | 默认值 |
+| Environment Variable | Meaning | Default Value |
 |----|----|----|
-| ROIO_HOST | ROIOClient连接的ROIO-Agent的Hostname或者IP地址 | 127.0.0.1 |
-| ROIO_PORT | ROIOClient连接的ROIO-Agent的端口号 | 3333 |
-| CH_ID | meter测试和echo测试用的channel号，收发两端要一致才能通信成功用户自己实现的ROIO-Client不需要依赖这个环境变量，可以自行选择0-255之间的通道号 | 0 |
+| ROIO_HOST | Hostname or IP address of the ROIO-Agent that ROIOClient connects to | 127.0.0.1 |
+| ROIO_PORT | Port number of the ROIO-Agent that ROIOClient connects to | 3333 |
+| CH_ID | Channel number used for meter testing and echo testing. Both sending and receiving ends must have consistent values to communicate successfully. User-implemented ROIO-Clients don't need to rely on this environment variable and can choose any channel ID between 0-255 | 0 |
 
-## 样例：处理消息回调函数
-
+## Example: Message Handling Callback Function
 
 ```python
-    # 例子详细实现见roio_echo_client.py
+    # Detailed implementation example can be found in roio_echo_client.py
     echo_roio_client = ROIOClient()
 
     def echo_func(msg):
-        """"定义把消息原样发回去的行为"""
+        """"Define behavior to send the message back as-is"""
         logger.info(f"ECHO: {msg}")
-        # msg.channel_id  # PUBLISH消息的通道ID
-        # msg.body        # 消息携带的字节流 
+        # msg.channel_id  # Channel ID of the PUBLISH message
+        # msg.body        # Byte stream carried by the message 
         echo_roio_client.publish_to_channel(msg.channel_id, msg.body)
-    # 指定处理消息的方式为echo_func
+    # Specify message handling method as echo_func
     echo_roio_client.set_callback(echo_func) #override the callback function upon published
     
-    # 启动roio_client线程
+    # Start the roio_client thread
     echo_roio_client.start()
     
     CHANNEL_ID=0x00
     echo_roio_client.subscribe_to_channel(CHANNEL_ID)
     echo_roio_client.publish_to_channel(CHANNEL_ID, b"Hello World")
-
 ```
 
+# Subscribe/Unsubscribe to Channels
 
-# Subscribe/Unsubscribe到通道
-
-ROIO支持0-255 256个通道，
+ROIO supports 256 channels from 0-255:
 
 ```python
 #roio_proto.py
 CHANNEL_RANGE=range(0x00, 0x100)   # 0-255
 ```
 
-调用该方法后，本端ROIO Agent收到远端发来的对应Channel的消息后，会PUBLISH给Subsribed的ROIO Client
+After calling this method, when the local ROIO Agent receives messages from the remote side for the corresponding Channel, it will PUBLISH them to the subscribed ROIO Client:
 
 ```python
 class RoIOClient(Thread):
 ...
     def subscribe_to_channel(self, 
-                              channel_id,    # 0-255, 不在范围内会raise Exception
-                              unsubscribe=False):   # 默认是False表示subscribe，如果是True表示unsubscribe
+                              channel_id,    # 0-255, out-of-range values will raise Exception
+                              unsubscribe=False):   # Defaults to False for subscribe, True for unsubscribe
         ...
 ```
 
+# Publish Byte Stream to Specified Channel
 
-# Publish字节流到指定通道
-
-
-调用该方法后，SDK会把消息PUBLISH给本端ROIO Agent, ROIO Agent负责发送给远端ROIO Agent， ROIO Agent再PUBLISH给subscribe在对应ChannelID上的远端ROIO Client
-
+After calling this method, the SDK will PUBLISH the message to the local ROIO Agent, which is responsible for sending it to the remote ROIO Agent. The remote ROIO Agent then PUBLISHes it to the remote ROIO Client subscribed to the corresponding ChannelID:
 
 ```python
  class RoIOClient(Thread):
 ...
     def publish_to_channel(self, 
     channel_id, 
-    bs   #字节流，不要超过MTU-20, 一般最大大约是1400 BYTES上下
+    bs   #Byte stream, shouldn't exceed MTU-20, generally maximum around 1400 BYTES
     ):
 ...
 ```
 
+# Starting/Stopping RoIOClient Object
 
-# start/stop RoIOClient对象
+RoIOClient has 3 internal threads:
+* roio-msgloop thread handles UDP socket message sending/receiving
+* roio-keepalive thread periodically maintains existing subscriptions
+* roio-processor thread processes received PUBLISH messages by calling user-registered callback methods
 
-RoIOClient内部有3个线程，
-
-* roio-msgloop线程负责udp socket消息的收发，
-* roio-keepalive线程负责定期保活已有的subscribption
-* roio-processor线程负责收到PUBLISH的消息调用用户注册的回调方法处理
-
-需要通过start/stop函数来启动/停止所有线程， 注意停止后不能重新start，需要重新初始化一个ROIOClient对象再start
-
-
+All threads need to be started/stopped through start/stop functions. Note that once stopped, it cannot be restarted - you need to reinitialize a new ROIOClient object and then start it.
