@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import os, sys
-from Logger import *
-from UdpSocket import UdpSocket
-from roio_proto import *
+from .Logger import *
+from .UdpSocket import UdpSocket
+from .roio_proto import *
 from threading import Thread, RLock, Event
 import socket
 import queue

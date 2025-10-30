@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import os, sys
-from .Logger import *
-from .roio_proto import *
-from .roio_client import RoIOClient
+from robox_sdk_lite.Logger import *
+from robox_sdk_lite.roio_proto import *
+from robox_sdk_lite.roio_client import RoIOClient
 from threading import Thread, Lock
 
 CHANNEL_ID=int(os.getenv("CH_ID", "0"))

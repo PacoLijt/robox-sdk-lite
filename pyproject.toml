@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "robox_sdk_lite"
-version = "1.0.2"
+version = "1.0.4"
 authors = [
   { name="Paco Li Junting", email="paco.li@intedigo.com" },
 ]

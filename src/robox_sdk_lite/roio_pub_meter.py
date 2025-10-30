@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import os, sys
-from Logger import *
-from roio_proto import *
-from roio_client import RoIOClient
+from .Logger import *
+from .roio_proto import *
+from .roio_client import RoIOClient
 from threading import Thread, Lock
 
 
