@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "robox-sdk-lite"
-version = "1.0.2"
+name = "robox_sdk_lite"
+version = "1.0.3"
 authors = [
   { name="Paco Li Junting", email="paco.li@intedigo.com" },
 ]
@@ -24,4 +24,4 @@ dependencies = [
 "Bug Tracker" = "https://github.com/PacoLijt/robox-sdk-lite/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/robox-sdk-lite"]
+packages = ["src/robox_sdk_lite"]
